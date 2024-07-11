@@ -283,8 +283,14 @@ class GaussianDreamer(BaseLift3DSystem):
 
         self.gaussian.update_learning_rate(self.true_global_step)
         
-        if self.true_global_step > 500:
+        if self.true_global_step > 400:
             self.guidance.set_min_max_steps(min_step_percent=0.02, max_step_percent=0.55)
+        elif self.true_global_step > 600:
+            self.guidance.set_min_max_steps(min_step_percent=0.02, max_step_percent=0.5)
+        elif self.true_global_step > 800:
+            self.guidance.set_min_max_steps(min_step_percent=0.02, max_step_percent=0.4)
+        elif self.true_global_step > 1000:
+            self.guidance.set_min_max_steps(min_step_percent=0.02, max_step_percent=0.3)
 
         self.gaussian.update_learning_rate(self.true_global_step)
 
@@ -294,7 +300,7 @@ class GaussianDreamer(BaseLift3DSystem):
         images = out["comp_rgb"]
 
 
-        guidance_eval = (self.true_global_step % 10 == 0)
+        guidance_eval = (self.true_global_step % 200 == 0)
         # guidance_eval = False
         
         guidance_out = self.guidance(
