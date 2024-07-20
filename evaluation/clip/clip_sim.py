@@ -46,7 +46,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--img_folder', type=str, default='/', help="eval img folder")
+    parser.add_argument('--img_folder', type=str, default='./output', help="eval img folder")
     
     opt = parser.parse_args()
 
