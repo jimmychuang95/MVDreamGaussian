@@ -20,3 +20,15 @@ for prompt in prompts:
     ]
     print(f'Running command: {command}')
     subprocess.run(command)
+
+# clipSim_command = [
+#     'python', './evaluation/clip/clip_sim.py'
+# ]
+# print(f'Running final command: {clipSim_command}')
+# subprocess.run(clipSim_command)
+
+# mean_variance_command = [
+#     'python', './evaluation/clip/mean_variance.py'
+# ]
+# print(f'Running final command: {mean_variance_command}')
+# subprocess.run(mean_variance_command)

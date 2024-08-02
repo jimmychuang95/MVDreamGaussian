@@ -46,17 +46,18 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--img_folder', type=str, default='./output', help="eval img folder")
+    parser.add_argument('--img_folder', type=str, default='./outputs/gaussiandreamer-sd', help="eval img folder")
     
     opt = parser.parse_args()
 
     clip = CLIP('cuda', model_name='laion/CLIP-ViT-bigG-14-laion2B-39B-b160k')
+    #clip = CLIP('cuda', model_name='openai/clip-vit-large-patch14')
     for num in range(0,10):
         folders = os.listdir(opt.img_folder)
         folders.sort()
         all_score = []
         results_json = {}
-        for folder in folders:
+        for folder in tqdm.tqdm(folders, desc=f"Running num {num+1}"):
             img_folder = os.path.join(opt.img_folder,folder,'save/it1200-test')
             img_list = [os.path.join(nm) for nm in os.listdir(img_folder) if nm[-3:] in ['jpg','png','gif']]
             img_list.sort(key=lambda x:int(x[:-4]))
@@ -85,7 +86,7 @@ if __name__ == '__main__':
 
         all_mean = np.mean(all_score)
         results_json['all_mean'] = all_mean
-        with open('GaussianDreamer.json','w',encoding='utf-8') as f:
+        with open(f'./evaluation/clip_result/GaussianDreamer-{num}.json','w',encoding='utf-8') as f:
             json.dump(results_json,f,indent = 4)
 
     

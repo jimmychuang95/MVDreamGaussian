@@ -285,15 +285,6 @@ class GaussianDreamer(BaseLift3DSystem):
 
         if self.true_global_step > 500:
             self.guidance.set_min_max_steps(min_step_percent=0.02, max_step_percent=0.55)
-        
-        # if self.true_global_step > 400:
-        #     self.guidance.set_min_max_steps(min_step_percent=0.02, max_step_percent=0.55)
-        # elif self.true_global_step > 600:
-        #     self.guidance.set_min_max_steps(min_step_percent=0.02, max_step_percent=0.5)
-        # elif self.true_global_step > 800:
-        #     self.guidance.set_min_max_steps(min_step_percent=0.02, max_step_percent=0.3)
-        # elif self.true_global_step > 1000:
-        #     self.guidance.set_min_max_steps(min_step_percent=0.02, max_step_percent=0.1)
 
         self.gaussian.update_learning_rate(self.true_global_step)
 
