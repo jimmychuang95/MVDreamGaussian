@@ -343,7 +343,7 @@ class BaseLift3DSystem(BaseSystem):
                         "kwargs": {"data_format": "HWC"},
                     }
                 ]
-            )
+            ) if "imgs_1step" in guidance_eval_out else []
             + (
                 [
                     {
@@ -352,7 +352,7 @@ class BaseLift3DSystem(BaseSystem):
                         "kwargs": {"data_format": "HWC"},
                     }
                 ]
-            )
+            ) if "imgs_1orig" in guidance_eval_out else []
             + (
                 [
                     {

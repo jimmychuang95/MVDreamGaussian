@@ -23,6 +23,7 @@ from shap_e.util.notebooks import decode_latent_mesh
 import io  
 from PIL import Image  
 import open3d as o3d
+import torchvision.utils as vutils
 
 
 def load_ply(path,save_path):
@@ -154,6 +155,8 @@ class GaussianDreamer(BaseLift3DSystem):
         point_cloud.points = o3d.utility.Vector3dVector(coords)
         point_cloud.colors = o3d.utility.Vector3dVector(rgb)
         self.point_cloud = point_cloud
+        o3d.io.write_point_cloud(self.get_save_path("shape.ply"), self.point_cloud)
+        self.save_gif_to_file(self.shapeimages, self.get_save_path("shape.gif"))
 
         return coords,rgb,0.4
     
@@ -319,10 +322,17 @@ class GaussianDreamer(BaseLift3DSystem):
         self.log("train/loss_opaque", loss_opaque)
         loss += loss_opaque * self.C(self.cfg.loss.lambda_opaque)
         if guidance_eval:
-            self.guidance_evaluation_save(
-                out["comp_rgb"].detach()[: guidance_out["eval"]["bs"]],
-                guidance_out["eval"],
-            )
+            if(self.cfg.guidance_type != 'mvdream-multiview-diffusion-guidance'):
+                self.guidance_evaluation_save(
+                    out["comp_rgb"].detach()[: guidance_out["eval"]["bs"]],
+                    guidance_out["eval"],
+                )
+            else:
+                save_path = self.get_save_path(f"it{self.true_global_step}-train.png")
+                images = torch.cat([guidance_out["eval"]["imgs"], guidance_out["eval"]["imgs_noisy"], guidance_out["eval"]["imgs_final"]], dim=0)
+                image_grid = vutils.make_grid(images, nrow=4, normalize=False)
+                vutils.save_image(image_grid, save_path)
+
         for name, value in self.cfg.loss.items():
             self.log(f"train_params/{name}", self.C(value))
 
@@ -357,7 +367,6 @@ class GaussianDreamer(BaseLift3DSystem):
 
     def validation_step(self, batch, batch_idx):
         out = self(batch)
-        print(f"it{self.true_global_step}-{batch['index'][0]}.png")
         self.save_image_grid(
             f"it{self.true_global_step}-{batch['index'][0]}.png",
             (

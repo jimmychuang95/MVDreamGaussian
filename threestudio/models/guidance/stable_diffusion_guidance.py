@@ -14,6 +14,10 @@ from threestudio.utils.misc import C, cleanup, parse_version
 from threestudio.utils.ops import perpendicular_component
 from threestudio.utils.typing import *
 
+import torchvision.utils as vutils
+import time
+import os
+
 
 @threestudio.register("stable-diffusion-guidance")
 class StableDiffusionGuidance(BaseObject):
@@ -396,7 +400,7 @@ class StableDiffusionGuidance(BaseObject):
             )
             # encode image into latents with vae
             latents = self.encode_images(rgb_BCHW_512)
-
+            
         # timestep ~ U(0.02, 0.98) to avoid very high/low noise level
         t = torch.randint(
             self.min_step,
