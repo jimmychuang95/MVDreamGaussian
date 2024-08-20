@@ -234,11 +234,12 @@ class GaussianDreamer(BaseLift3DSystem):
             renderbackground = self.background_tensor
         images = []
         depths = []
+        viewpoint_cams = []
         self.viewspace_point_list = []
         for id in range(batch['c2w_3dgs'].shape[0]):
-       
+            
             viewpoint_cam  = Camera(c2w = batch['c2w_3dgs'][id],FoVy = batch['fovy'][id],height = batch['height'],width = batch['width'])
-
+            #viewpoint_cam  = Camera(c2w = batch['c2w'][id],FoVy = batch['fovy'][id],height = batch['height'],width = batch['width'])
 
             render_pkg = render(viewpoint_cam, self.gaussian, self.pipe, renderbackground)
             image, viewspace_point_tensor, _, radii = render_pkg["render"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"]
@@ -260,6 +261,7 @@ class GaussianDreamer(BaseLift3DSystem):
             image =  image.permute(1, 2, 0)
             images.append(image)
             depths.append(depth)
+            viewpoint_cams.append(viewpoint_cam)
             
 
 
@@ -270,6 +272,7 @@ class GaussianDreamer(BaseLift3DSystem):
         render_pkg["comp_rgb"] = images
         render_pkg["depth"] = depths
         render_pkg["opacity"] = depths / (depths.max() + 1e-5)
+        render_pkg["viewpoint_cams"] = viewpoint_cams
         return {
             **render_pkg,
         }
@@ -286,8 +289,16 @@ class GaussianDreamer(BaseLift3DSystem):
 
         self.gaussian.update_learning_rate(self.true_global_step)
 
-        if self.true_global_step > 500:
-            self.guidance.set_min_max_steps(min_step_percent=0.02, max_step_percent=0.55)
+        if(self.cfg.guidance_type == 'stable-diffusion-guidance'):
+            if self.true_global_step > 500:
+                self.guidance.set_min_max_steps(min_step_percent=0.02, max_step_percent=0.55)
+        elif(self.cfg.guidance_type == 'mvdream-multiview-diffusion-guidance'):
+            if self.true_global_step > 500:
+                self.guidance.set_min_max_steps(min_step_percent=0.02, max_step_percent=0.55)
+
+        # if self.true_global_step > 500:
+        #     self.guidance.set_min_max_steps(min_step_percent=0.02, max_step_percent=0.55)
+
 
         self.gaussian.update_learning_rate(self.true_global_step)
 
@@ -304,11 +315,12 @@ class GaussianDreamer(BaseLift3DSystem):
             images, prompt_utils, **batch, rgb_as_latents=False,guidance_eval=guidance_eval
         )
         
+        self.log("train/diffusion_t", guidance_out["t"].float().mean())
 
         loss = 0.0
 
         loss = loss + guidance_out['loss_sds'] *self.C(self.cfg.loss['lambda_sds'])
-        
+        self.log("train/loss_sds", guidance_out['loss_sds'])
 
 
 
@@ -321,6 +333,8 @@ class GaussianDreamer(BaseLift3DSystem):
         loss_opaque = binary_cross_entropy(opacity_clamped, opacity_clamped)
         self.log("train/loss_opaque", loss_opaque)
         loss += loss_opaque * self.C(self.cfg.loss.lambda_opaque)
+
+        self.log("train/final_loss", loss)
         if guidance_eval:
             if(self.cfg.guidance_type != 'mvdream-multiview-diffusion-guidance'):
                 self.guidance_evaluation_save(
@@ -328,16 +342,13 @@ class GaussianDreamer(BaseLift3DSystem):
                     guidance_out["eval"],
                 )
             else:
-                save_path = self.get_save_path(f"it{self.true_global_step}-train.png")
+                save_path = self.get_save_path(f"it{self.true_global_step}-mv-train.png")
                 images = torch.cat([guidance_out["eval"]["imgs"], guidance_out["eval"]["imgs_noisy"], guidance_out["eval"]["imgs_final"]], dim=0)
                 image_grid = vutils.make_grid(images, nrow=4, normalize=False)
                 vutils.save_image(image_grid, save_path)
 
         for name, value in self.cfg.loss.items():
             self.log(f"train_params/{name}", self.C(value))
-
-
-
 
         return {"loss": loss}
 
@@ -367,6 +378,8 @@ class GaussianDreamer(BaseLift3DSystem):
 
     def validation_step(self, batch, batch_idx):
         out = self(batch)
+        # for i in range(len(out['viewpoint_cams'])):
+        #     print(out["viewpoint_cams"][i])
         self.save_image_grid(
             f"it{self.true_global_step}-{batch['index'][0]}.png",
             (
@@ -517,6 +530,7 @@ class GaussianDreamer(BaseLift3DSystem):
         )
         save_path = self.get_save_path(f"last_3dgs.ply")
         self.gaussian.save_ply(save_path)
+        self.draw_graph()
         # self.pointefig.savefig(self.get_save_path("pointe.png"))
         if self.load_type==0:
             o3d.io.write_point_cloud(self.get_save_path("shape.ply"), self.point_cloud)
@@ -529,6 +543,10 @@ class GaussianDreamer(BaseLift3DSystem):
         self.parser = ArgumentParser(description="Training script parameters")
         
         opt = OptimizationParams(self.parser)
+        
+        if(self.cfg.guidance_type == 'mvdream-multiview-diffusion-guidance'):
+            self.radius = 4.0
+
         point_cloud = self.pcb()
         self.cameras_extent = 4.0
         self.gaussian.create_from_pcd(point_cloud, self.cameras_extent)

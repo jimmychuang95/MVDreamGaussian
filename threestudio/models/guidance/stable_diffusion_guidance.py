@@ -435,6 +435,7 @@ class StableDiffusionGuidance(BaseObject):
             "grad_norm": grad.norm(),
             "min_step": self.min_step,
             "max_step": self.max_step,
+            "t": t,
         }
 
         if guidance_eval:

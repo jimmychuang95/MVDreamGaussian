@@ -10,6 +10,7 @@ import numpy as np
 import torch
 import trimesh
 import wandb
+import pandas as pd
 from matplotlib import cm
 from matplotlib.colors import LinearSegmentedColormap
 from PIL import Image, ImageDraw
@@ -52,6 +53,50 @@ class SaverMixin:
         save_path = os.path.join(self.get_save_dir(), filename)
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
         return save_path
+    
+    def get_log_dir(self):
+        log_dir = self.get_save_dir()
+        log_dir = log_dir.replace("save", "csv_logs/version_0")
+        return log_dir
+    
+    def draw_graph(self):
+        log_path = os.path.join(self.get_log_dir(), 'metrics.csv')
+        df = pd.read_csv(log_path)
+        df_filtered = df[['step', 'train/loss_sds', 'train/loss_sparsity', 'train/diffusion_t']].dropna()
+        
+        # Plot and save SDS Loss
+        plt.figure(figsize=(10, 6))
+        plt.plot(df_filtered['step'], df_filtered['train/loss_sds'], label='sds_loss')
+        plt.xlabel('Step')
+        plt.ylabel('Loss')
+        plt.title('SDS Loss over Steps')
+        plt.legend()
+        plt.grid(True)
+        plt.savefig(os.path.join(self.get_log_dir(), 'sds_loss.png'))
+        plt.close()
+    
+        # Plot and save Sparsity Loss
+        plt.figure(figsize=(10, 6))
+        plt.plot(df_filtered['step'], df_filtered['train/loss_sparsity'], label='sparsity_loss', color='orange')
+        plt.xlabel('Step')
+        plt.ylabel('Loss')
+        plt.title('Sparsity Loss over Steps')
+        plt.legend()
+        plt.grid(True)
+        plt.savefig(os.path.join(self.get_log_dir(), 'sparsity_loss.png'))
+        plt.close()
+    
+        # Plot and save Diffusion_t
+        plt.figure(figsize=(10, 6))
+        plt.plot(df_filtered['step'], df_filtered['train/diffusion_t'], label='diffusion_t', color='green')
+        plt.xlabel('Step')
+        plt.ylabel('Diffusion_t')
+        plt.title('Diffusion_t over Steps')
+        plt.legend()
+        plt.grid(True)
+        plt.savefig(os.path.join(self.get_log_dir(), 'diffusion_t.png'))
+        plt.close()
+
 
     def create_loggers(self, cfg_loggers: DictConfig) -> None:
         if "wandb" in cfg_loggers.keys() and cfg_loggers.wandb.enable:
