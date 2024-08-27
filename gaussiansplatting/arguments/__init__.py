@@ -69,6 +69,7 @@ class PipelineParams(ParamGroup):
 
 class OptimizationParams(ParamGroup):
     def __init__(self, parser):
+        #3D Gaussian Splatting Learning Rates
         self.iterations = 3_200
         self.position_lr_init = 0.00005
         self.position_lr_final = 0.000025

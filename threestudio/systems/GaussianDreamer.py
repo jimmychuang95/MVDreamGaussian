@@ -95,6 +95,8 @@ class GaussianDreamer(BaseLift3DSystem):
         bg_color = [1, 1, 1] if False else [0, 0, 0]
         self.background_tensor = torch.tensor(bg_color, dtype=torch.float32, device="cuda")
 
+        #self.automatic_optimization = False
+
     
     def save_gif_to_file(self,images, output_file):  
         with io.BytesIO() as writer:  
@@ -289,12 +291,12 @@ class GaussianDreamer(BaseLift3DSystem):
 
         self.gaussian.update_learning_rate(self.true_global_step)
 
-        if(self.cfg.guidance_type == 'stable-diffusion-guidance'):
-            if self.true_global_step > 500:
-                self.guidance.set_min_max_steps(min_step_percent=0.02, max_step_percent=0.55)
-        elif(self.cfg.guidance_type == 'mvdream-multiview-diffusion-guidance'):
-            if self.true_global_step > 500:
-                self.guidance.set_min_max_steps(min_step_percent=0.02, max_step_percent=0.55)
+        # if(self.cfg.guidance_type == 'stable-diffusion-guidance'):
+        #     if self.true_global_step > 500:
+        #         self.guidance.set_min_max_steps(min_step_percent=0.02, max_step_percent=0.55)
+        # elif(self.cfg.guidance_type == 'mvdream-multiview-diffusion-guidance'):
+        #     if self.true_global_step > 500:
+        #         self.guidance.set_min_max_steps(min_step_percent=0.02, max_step_percent=0.55)
 
         # if self.true_global_step > 500:
         #     self.guidance.set_min_max_steps(min_step_percent=0.02, max_step_percent=0.55)
@@ -349,6 +351,17 @@ class GaussianDreamer(BaseLift3DSystem):
 
         for name, value in self.cfg.loss.items():
             self.log(f"train_params/{name}", self.C(value))
+
+        # loss_threshold = 25000
+        # if loss.item() < loss_threshold:
+        # #if True:
+        #     #print(f"loss: {loss.item()}")
+        #     opt = self.optimizers()
+        #     opt.zero_grad()
+        #     self.manual_backward(loss)
+        #     opt.step()
+        # else:
+        #     print(f"loss: {loss.item()}")
 
         return {"loss": loss}
 
@@ -545,7 +558,7 @@ class GaussianDreamer(BaseLift3DSystem):
         opt = OptimizationParams(self.parser)
         
         if(self.cfg.guidance_type == 'mvdream-multiview-diffusion-guidance'):
-            self.radius = 4.0
+            self.radius = 1.5
 
         point_cloud = self.pcb()
         self.cameras_extent = 4.0

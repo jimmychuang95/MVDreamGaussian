@@ -7,7 +7,6 @@ data_type: "mvdream-random-multiview-camera-datamodule"
 data:
   batch_size: 4
   n_view: 4
-  # 0-4999: 64x64, >=5000: 256x256
   width: 512
   height: 512
   camera_distance_range: [0.8, 1.0] # relative
@@ -38,8 +37,8 @@ system:
     model_name: "sd-v2.1-base-4view"
     ckpt_path: null # path to a pre-downloaded checkpoint file (null for loading from URL)
     guidance_scale: 50.0
-    min_step_percent: 0.02  # (start_iter, start_val, end_val, end_iter)
-    max_step_percent: 0.98
+    min_step_percent: [0, 0.98, 0.02, 800]  # (start_iter, start_val, end_val, end_iter)
+    max_step_percent: [0, 0.98, 0.50, 800]
     recon_loss: true
     recon_std_rescale: 0.5
 
@@ -51,7 +50,7 @@ system:
 
   loss:
     lambda_sds: 1.
-    lambda_sparsity: 1.
+    lambda_sparsity: 0.0
     lambda_opaque: 0.0
   optimizer:
     name: Adam
