@@ -71,14 +71,16 @@ class OptimizationParams(ParamGroup):
     def __init__(self, parser):
         #3D Gaussian Splatting Learning Rates
         self.iterations = 3_200
-        self.position_lr_init = 0.00005
-        self.position_lr_final = 0.000025
-        self.position_lr_delay_mult = 0.5
-        self.position_lr_max_steps = 30_000
-        self.feature_lr = 0.0125
-        self.opacity_lr = 0.01
-        self.scaling_lr = 0.005
-        self.rotation_lr = 0.001
+        self.position_lr_init = 0.00005 #0.00005
+        self.position_lr_final = 0.0000005
+        self.position_lr_delay_mult = 0.01
+        self.position_lr_max_steps = 1200
+        self.feature_lr = 0.0125 #0.0125
+        self.feature_lr_final = 0.0075
+        self.opacity_lr = 0.01 #0.01
+        self.scaling_lr = 0.005 #0.005
+        self.scaling_lr_final = 0.001
+        self.rotation_lr = 0.001 #0.001
         self.percent_dense = 0.01
         self.lambda_dssim = 0.2
         self.densification_interval = 100

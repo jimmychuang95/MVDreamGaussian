@@ -73,6 +73,7 @@ def fetchPly(path):
     return BasicPointCloud(points=positions, colors=colors, normals=normals)
 
 
+
 @threestudio.register("gaussiandreamer-system")
 class GaussianDreamer(BaseLift3DSystem):
     @dataclass
@@ -194,6 +195,18 @@ class GaussianDreamer(BaseLift3DSystem):
         all_coords = np.concatenate([all_coords,coords],axis=0)
         all_rgb = np.concatenate([all_rgb,rgb],axis=0)
         return all_coords,all_rgb
+    
+    def add_random_points(self, coords, rgb):
+        pcd_by3d = o3d.geometry.PointCloud()
+        pcd_by3d.points = o3d.utility.Vector3dVector(np.array(coords))
+        np.random.seed(0)
+
+        num_points = 10000  
+
+        points = np.random.uniform(low=-1.0, high=1.0, size=(num_points, 3))
+        random_colors = np.random.rand(num_points, 3)
+
+        return points, random_colors
 
     def smpl(self):
         self.num_pts  = 50000
@@ -222,7 +235,8 @@ class GaussianDreamer(BaseLift3DSystem):
         
         bound= self.radius*scale
 
-        all_coords,all_rgb = self.add_points(coords,rgb)
+        #all_coords,all_rgb = self.add_points(coords,rgb)
+        all_coords,all_rgb = self.add_random_points(coords,rgb)
         
 
         pcd = BasicPointCloud(points=all_coords *bound, colors=all_rgb, normals=np.zeros((all_coords.shape[0], 3)))
@@ -289,20 +303,26 @@ class GaussianDreamer(BaseLift3DSystem):
     
     def training_step(self, batch, batch_idx):
 
-        self.gaussian.update_learning_rate(self.true_global_step)
+        #self.gaussian.update_learning_rate(self.true_global_step)
 
-        # if(self.cfg.guidance_type == 'stable-diffusion-guidance'):
-        #     if self.true_global_step > 500:
-        #         self.guidance.set_min_max_steps(min_step_percent=0.02, max_step_percent=0.55)
+        if(self.cfg.guidance_type == 'stable-diffusion-guidance'):
+            if self.true_global_step > 500:
+                self.guidance.set_min_max_steps(min_step_percent=0.02, max_step_percent=0.55)
         # elif(self.cfg.guidance_type == 'mvdream-multiview-diffusion-guidance'):
-        #     if self.true_global_step > 500:
+        #     if self.true_global_step > 1000:
         #         self.guidance.set_min_max_steps(min_step_percent=0.02, max_step_percent=0.55)
 
         # if self.true_global_step > 500:
         #     self.guidance.set_min_max_steps(min_step_percent=0.02, max_step_percent=0.55)
 
 
-        self.gaussian.update_learning_rate(self.true_global_step)
+        xyz_lr = self.gaussian.update_learning_rate(self.true_global_step) 
+        feature_lr = self.gaussian.update_feature_learning_rate(self.true_global_step)
+        scaling_lr = self.gaussian.update_scaling_learning_rate(self.true_global_step)
+
+        self.log("train/xyz_lr", xyz_lr)
+        self.log("train/feature_lr", feature_lr)
+        self.log("train/scaling_lr", scaling_lr)
 
         out = self(batch) 
 
@@ -310,7 +330,7 @@ class GaussianDreamer(BaseLift3DSystem):
         images = out["comp_rgb"]
 
 
-        guidance_eval = (self.true_global_step % 200 == 0)
+        guidance_eval = (self.true_global_step % 100 == 0)
         # guidance_eval = False
         
         guidance_out = self.guidance(
@@ -352,16 +372,6 @@ class GaussianDreamer(BaseLift3DSystem):
         for name, value in self.cfg.loss.items():
             self.log(f"train_params/{name}", self.C(value))
 
-        # loss_threshold = 25000
-        # if loss.item() < loss_threshold:
-        # #if True:
-        #     #print(f"loss: {loss.item()}")
-        #     opt = self.optimizers()
-        #     opt.zero_grad()
-        #     self.manual_backward(loss)
-        #     opt.step()
-        # else:
-        #     print(f"loss: {loss.item()}")
 
         return {"loss": loss}
 

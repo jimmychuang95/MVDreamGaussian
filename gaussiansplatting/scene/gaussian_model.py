@@ -167,6 +167,16 @@ class GaussianModel:
                                                     lr_final=training_args.position_lr_final*self.spatial_lr_scale* scale_small,
                                                     lr_delay_mult=training_args.position_lr_delay_mult,
                                                     max_steps=training_args.position_lr_max_steps)
+        
+        self.scaling_scheduler_args = get_expon_lr_func(lr_init=training_args.scaling_lr,
+                                                    lr_final=training_args.scaling_lr_final,
+                                                    lr_delay_mult=training_args.position_lr_delay_mult,
+                                                    max_steps=training_args.iterations)
+
+        self.feature_scheduler_args = get_expon_lr_func(lr_init=training_args.feature_lr,
+                                                    lr_final=training_args.feature_lr_final,
+                                                    lr_delay_mult=training_args.position_lr_delay_mult,
+                                                    max_steps=training_args.iterations)
 
     def update_learning_rate(self, iteration):
         ''' Learning rate scheduling per step '''
@@ -174,13 +184,30 @@ class GaussianModel:
             if param_group["name"] == "xyz":
                 lr = self.xyz_scheduler_args(iteration)
                 param_group['lr'] = lr
-                # print("xyz lr : ", lr)
+                return lr
+                #print("xyz lr : ", lr)
             # if param_group["name"] == "f_dc":
             #     # import pdb; pdb.set_trace()
             #     param_group['lr'] = param_group['lr'] * ((0.5) ** (1.0 / 1200.0))
             # if param_group["name"] == "f_rest":
             #     # import pdb; pdb.set_trace()
             #     param_group['lr'] = param_group['lr'] * ((0.5) ** (1.0 / 1200.0))
+    
+    def update_feature_learning_rate(self, iteration):
+        ''' Learning rate scheduling per step '''
+        for param_group in self.optimizer.param_groups:
+            if param_group["name"] == "f_dc":
+                lr = self.feature_scheduler_args(iteration)
+                param_group['lr'] = lr
+                return lr
+            
+    def update_scaling_learning_rate(self, iteration):
+        ''' Learning rate scheduling per step '''
+        for param_group in self.optimizer.param_groups:
+            if param_group["name"] == "scaling":
+                lr = self.scaling_scheduler_args(iteration)
+                param_group['lr'] = lr
+                return lr
 
 
 

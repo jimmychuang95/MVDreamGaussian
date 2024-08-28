@@ -62,7 +62,7 @@ class SaverMixin:
     def draw_graph(self):
         log_path = os.path.join(self.get_log_dir(), 'metrics.csv')
         df = pd.read_csv(log_path)
-        df_filtered = df[['step', 'train/loss_sds', 'train/loss_sparsity', 'train/diffusion_t']].dropna()
+        df_filtered = df[['step', 'train/loss_sds', 'train/diffusion_t', 'train/xyz_lr', 'train/feature_lr', 'train/scaling_lr']].dropna()
         
         # Plot and save SDS Loss
         plt.figure(figsize=(10, 6))
@@ -75,17 +75,6 @@ class SaverMixin:
         plt.savefig(os.path.join(self.get_log_dir(), 'sds_loss.png'))
         plt.close()
     
-        # Plot and save Sparsity Loss
-        plt.figure(figsize=(10, 6))
-        plt.plot(df_filtered['step'], df_filtered['train/loss_sparsity'], label='sparsity_loss', color='orange')
-        plt.xlabel('Step')
-        plt.ylabel('Loss')
-        plt.title('Sparsity Loss over Steps')
-        plt.legend()
-        plt.grid(True)
-        plt.savefig(os.path.join(self.get_log_dir(), 'sparsity_loss.png'))
-        plt.close()
-    
         # Plot and save Diffusion_t
         plt.figure(figsize=(10, 6))
         plt.plot(df_filtered['step'], df_filtered['train/diffusion_t'], label='diffusion_t', color='green')
@@ -95,6 +84,39 @@ class SaverMixin:
         plt.legend()
         plt.grid(True)
         plt.savefig(os.path.join(self.get_log_dir(), 'diffusion_t.png'))
+        plt.close()
+
+        # Plot and save XYZ Learning Rate
+        plt.figure(figsize=(10, 6))
+        plt.plot(df_filtered['step'], df_filtered['train/xyz_lr'], label='xyz_lr', color='red')
+        plt.xlabel('Step')
+        plt.ylabel('XYZ Learning Rate')
+        plt.title('XYZ Learning Rate over Steps')
+        plt.legend()
+        plt.grid(True)
+        plt.savefig(os.path.join(self.get_log_dir(), 'xyz_lr.png'))
+        plt.close()
+
+        # Plot and save Feature Learning Rate
+        plt.figure(figsize=(10, 6))
+        plt.plot(df_filtered['step'], df_filtered['train/feature_lr'], label='feature_lr', color='purple')
+        plt.xlabel('Step')
+        plt.ylabel('Feature Learning Rate')
+        plt.title('Feature Learning Rate over Steps')
+        plt.legend()
+        plt.grid(True)
+        plt.savefig(os.path.join(self.get_log_dir(), 'feature_lr.png'))
+        plt.close()
+
+        # Plot and save Scaling Learning Rate
+        plt.figure(figsize=(10, 6))
+        plt.plot(df_filtered['step'], df_filtered['train/scaling_lr'], label='scaling_lr', color='orange')
+        plt.xlabel('Step')
+        plt.ylabel('Scaling Learning Rate')
+        plt.title('Scaling Learning Rate over Steps')
+        plt.legend()
+        plt.grid(True)
+        plt.savefig(os.path.join(self.get_log_dir(), 'scaling_lr.png'))
         plt.close()
 
 
