@@ -235,8 +235,8 @@ class GaussianDreamer(BaseLift3DSystem):
         
         bound= self.radius*scale
 
-        #all_coords,all_rgb = self.add_points(coords,rgb)
-        all_coords,all_rgb = self.add_random_points(coords,rgb)
+        all_coords,all_rgb = self.add_points(coords,rgb)
+        #all_coords,all_rgb = self.add_random_points(coords,rgb)
         
 
         pcd = BasicPointCloud(points=all_coords *bound, colors=all_rgb, normals=np.zeros((all_coords.shape[0], 3)))
@@ -316,13 +316,13 @@ class GaussianDreamer(BaseLift3DSystem):
         #     self.guidance.set_min_max_steps(min_step_percent=0.02, max_step_percent=0.55)
 
 
-        xyz_lr = self.gaussian.update_learning_rate(self.true_global_step) 
-        feature_lr = self.gaussian.update_feature_learning_rate(self.true_global_step)
-        scaling_lr = self.gaussian.update_scaling_learning_rate(self.true_global_step)
+        #xyz_lr = self.gaussian.update_learning_rate(self.true_global_step) 
+        #feature_lr = self.gaussian.update_feature_learning_rate(self.true_global_step)
+        #scaling_lr = self.gaussian.update_scaling_learning_rate(self.true_global_step)
 
-        self.log("train/xyz_lr", xyz_lr)
-        self.log("train/feature_lr", feature_lr)
-        self.log("train/scaling_lr", scaling_lr)
+        #self.log("train/xyz_lr", xyz_lr)
+        #self.log("train/feature_lr", feature_lr)
+        #self.log("train/scaling_lr", scaling_lr)
 
         out = self(batch) 
 

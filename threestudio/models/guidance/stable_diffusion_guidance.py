@@ -253,6 +253,8 @@ class StableDiffusionGuidance(BaseObject):
             noise_pred = noise_pred_text + self.cfg.guidance_scale * (
                 noise_pred_text - noise_pred_uncond
             )
+            # From AYG
+            delta = self.cfg.guidance_scale * (noise_pred_text - noise_pred_uncond)
 
         if self.cfg.weighting_strategy == "sds":
             # w(t), sigma_t^2
@@ -268,6 +270,9 @@ class StableDiffusionGuidance(BaseObject):
 
         grad = w * (noise_pred - noise)
 
+        # From AYG
+        grad_delta = w * delta
+
         guidance_eval_utils = {
             "use_perp_neg": prompt_utils.use_perp_neg,
             "neg_guidance_weights": neg_guidance_weights,
@@ -277,7 +282,7 @@ class StableDiffusionGuidance(BaseObject):
             "noise_pred": noise_pred,
         }
 
-        return grad, guidance_eval_utils
+        return grad_delta, guidance_eval_utils
 
     def compute_grad_sjc(
         self,
